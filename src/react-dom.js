@@ -18,6 +18,10 @@ function createDOM(VNode) {
   let dom;
 
   // 1. 創建元素
+  if (typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT) {
+    // 函數式組件
+    return getDomByFunctionComponent(VNode);
+  }
   if (type && VNode.$$typeof === REACT_ELEMENT) {
     dom = document.createElement(type);
   }
@@ -40,6 +44,17 @@ function createDOM(VNode) {
   setPropsForDOM(dom, props);
 
   return dom;
+}
+
+/**
+ * 處理函數式組件
+ */
+function getDomByFunctionComponent(VNode) {
+  const { type, props } = VNode;
+  const renderVNode = type(props);
+  if (!renderVNode) return null;
+
+  return createDOM(renderVNode);
 }
 
 /**
