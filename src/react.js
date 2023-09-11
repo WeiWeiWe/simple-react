@@ -1,4 +1,5 @@
 import { REACT_ELEMENT } from './utils';
+import { Component } from './Component';
 
 function createElement(type, properties = {}, children) {
   const ref = properties.ref || null; // 與 DOM 相關的操作
@@ -33,6 +34,7 @@ function createElement(type, properties = {}, children) {
 
 const React = {
   createElement,
+  Component, // 類組件
 };
 
 export default React;

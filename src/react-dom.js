@@ -18,6 +18,14 @@ function createDOM(VNode) {
   let dom;
 
   // 1. 創建元素
+  if (
+    typeof type === 'function' &&
+    type.IS_CLASS_COMPONENT &&
+    VNode.$$typeof === REACT_ELEMENT
+  ) {
+    // 類組件
+    return getDomByClassComponent(VNode);
+  }
   if (typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT) {
     // 函數式組件
     return getDomByFunctionComponent(VNode);
@@ -42,8 +50,29 @@ function createDOM(VNode) {
 
   // 3. 處理屬性值
   setPropsForDOM(dom, props);
+  VNode.dom = dom; // 真實DOM
 
   return dom;
+}
+
+/**
+ * 處理類組件
+ */
+function getDomByClassComponent(VNode) {
+  const { type, props } = VNode;
+  const instance = new type(props);
+
+  const renderVNode = instance.render();
+  instance.oldVNode = renderVNode; // 當前的虛擬DOM，也相當於是舊的虛擬DOM
+
+  // 測試 setState 功能用，後續記得刪除
+  // setTimeout(() => {
+  //   instance.setState({ testState: 'child444444' });
+  // }, 3000);
+
+  if (!renderVNode) return null;
+
+  return createDOM(renderVNode);
 }
 
 /**
@@ -96,6 +125,27 @@ function setPropsForDOM(dom, VNodeProps = {}) {
       dom[key] = VNodeProps[key];
     }
   }
+}
+
+/**
+ * 取得真實DOM
+ * @param {*} VNode
+ * @returns
+ */
+export function findDomByVNode(VNode) {
+  if (!VNode) return;
+  if (VNode.dom) return VNode.dom;
+}
+
+/**
+ * 更新真實DOM
+ * @param {*} oldDOM
+ * @param {*} newVNode
+ */
+export function updateDomTree(oldDOM, newVNode) {
+  const parentNode = oldDOM.parentNode;
+  parentNode.removeChild(oldDOM);
+  parentNode.appendChild(createDOM(newVNode));
 }
 
 const ReactDOM = {
