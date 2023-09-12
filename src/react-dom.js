@@ -1,4 +1,5 @@
 import { REACT_ELEMENT } from './utils';
+import { addEvent } from './event';
 
 function render(VNode, containerDOM) {
   mount(VNode, containerDOM);
@@ -114,7 +115,8 @@ function setPropsForDOM(dom, VNodeProps = {}) {
     if (key === 'children') continue;
 
     if (/^on[A-Z].*/.test(key)) {
-      // TODO: 事件處理
+      // 事件處理
+      addEvent(dom, key.toLowerCase(), VNodeProps[key]);
     } else if (key === 'style') {
       // 處理 style 屬性
       Object.keys(VNodeProps[key]).forEach((styleName) => {

@@ -5,7 +5,7 @@ export const updaterQueue = {
   updaters: new Set(),
 };
 
-export function flushUpdateQueue() {
+export function flushUpdaterQueue() {
   updaterQueue.isBatch = false;
   for (const updater of updaterQueue.updaters) {
     updater.launchUpdate();
