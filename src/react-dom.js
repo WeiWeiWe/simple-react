@@ -1,4 +1,4 @@
-import { REACT_ELEMENT } from './utils';
+import { REACT_ELEMENT, REACT_FORWARD_REF } from './utils';
 import { addEvent } from './event';
 
 function render(VNode, containerDOM) {
@@ -15,10 +15,13 @@ function mount(VNode, containerDOM) {
 
 /** 將虛擬 DOM 轉化成真實 DOM */
 function createDOM(VNode) {
-  const { type, props } = VNode;
+  const { type, props, ref } = VNode;
   let dom;
 
   // 1. 創建元素
+  if (type && type.$$typeof === REACT_FORWARD_REF) {
+    return getDomByForwardRefFunction(VNode);
+  }
   if (
     typeof type === 'function' &&
     type.IS_CLASS_COMPONENT &&
@@ -52,6 +55,7 @@ function createDOM(VNode) {
   // 3. 處理屬性值
   setPropsForDOM(dom, props);
   VNode.dom = dom; // 真實DOM
+  ref && (ref.current = dom);
 
   return dom;
 }
@@ -60,11 +64,12 @@ function createDOM(VNode) {
  * 處理類組件
  */
 function getDomByClassComponent(VNode) {
-  const { type, props } = VNode;
+  const { type, props, ref } = VNode;
   const instance = new type(props);
 
   const renderVNode = instance.render();
   instance.oldVNode = renderVNode; // 當前的虛擬DOM，也相當於是舊的虛擬DOM
+  ref && (ref.current = instance);
 
   // 測試 setState 功能用，後續記得刪除
   // setTimeout(() => {
@@ -84,6 +89,13 @@ function getDomByFunctionComponent(VNode) {
   const renderVNode = type(props);
   if (!renderVNode) return null;
 
+  return createDOM(renderVNode);
+}
+
+function getDomByForwardRefFunction(VNode) {
+  const { type, props, ref } = VNode;
+  const renderVNode = type.render(props, ref);
+  if (!renderVNode) return null;
   return createDOM(renderVNode);
 }
 

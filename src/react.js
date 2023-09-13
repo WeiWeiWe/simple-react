@@ -1,4 +1,4 @@
-import { REACT_ELEMENT } from './utils';
+import { REACT_ELEMENT, REACT_FORWARD_REF } from './utils';
 import { Component } from './Component';
 
 function createElement(type, properties = {}, children) {
@@ -32,9 +32,22 @@ function createElement(type, properties = {}, children) {
   };
 }
 
+function createRef() {
+  return { current: null };
+}
+
+function forwardRef(render) {
+  return {
+    $$typeof: REACT_FORWARD_REF,
+    render,
+  };
+}
+
 const React = {
   createElement,
   Component, // 類組件
+  createRef,
+  forwardRef,
 };
 
 export default React;
