@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from './utils';
+import { REACT_ELEMENT, REACT_FORWARD_REF, toVNode } from './utils';
 import { Component } from './Component';
 
 function createElement(type, properties = {}, children) {
@@ -17,10 +17,10 @@ function createElement(type, properties = {}, children) {
 
   if (arguments.length > 3) {
     // 多個子節點時，需要從 arguments 的第三個索引開始提取所有子節點，並轉換成陣列存取
-    props.children = Array.prototype.slice.call(arguments, 2);
+    props.children = Array.prototype.slice.call(arguments, 2).map(toVNode);
   } else {
     // 單個子節點時，直接從 children 提取子節點文字內容
-    props.children = children;
+    props.children = toVNode(children);
   }
 
   return {

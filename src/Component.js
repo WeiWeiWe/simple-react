@@ -69,7 +69,7 @@ export class Component {
     const newVNode = this.render();
     // 2. 根據新虛擬DOM 生成新的真實DOM
     // 3. 將真實DOM 掛載到頁面上
-    updateDomTree(oldDOM, newVNode);
+    updateDomTree(oldVNode, newVNode, oldDOM);
 
     this.oldVNode = newVNode; // 真實DOM 掛載完後，替換當前的虛擬DOM
   }

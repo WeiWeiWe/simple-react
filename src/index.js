@@ -1,68 +1,47 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
-class ClassComponent extends React.Component {
-  counter = 0;
+class MyClassComponent extends React.Component {
+  isReset = false;
+  oldArr = ['A', 'B', 'C', 'D', 'E'];
+  newArr = ['C', 'B', 'E', 'F', 'A'];
   constructor(props) {
     super(props);
     this.state = {
-      count: '0',
+      arr: this.oldArr,
     };
   }
-  updateShowText(newText) {
+  updateShowArr() {
     this.setState({
-      count: newText + '',
+      arr: this.isReset ? this.oldArr : this.newArr,
     });
+    this.isReset = !this.isReset;
   }
   render() {
     return (
-      <div
-        style={{
-          color: 'red',
-          cursor: 'pointer',
-          border: '1px solid gray',
-          borderRadius: '6px',
-          display: 'inline-block',
-          padding: '6px 12px',
-        }}
-        onClick={() => this.updateShowText(++this.counter)}
-      >
-        Count: {this.state.count}
+      <div>
+        <div
+          className="test-class"
+          style={{
+            color: 'red',
+            cursor: 'pointer',
+            border: '1px solid gray',
+            borderRadius: '6px',
+            display: 'inline-block',
+            padding: '6px 12px',
+          }}
+          onClick={() => this.updateShowArr()}
+        >
+          Change The Text
+        </div>
+        <div>
+          {this.state.arr.map((item) => {
+            return <div key={item}>{item}</div>;
+          })}
+        </div>
       </div>
     );
   }
 }
 
-const ForwardRefFunctionComponent = React.forwardRef((props, ref) => {
-  return <input ref={ref} />;
-});
-
-function FunctionComponent(props) {
-  const forwardRef = React.createRef();
-  const classRef = React.createRef();
-  const elementRef = React.createRef();
-  const changeInput = () => {
-    forwardRef.current.value = 'ForwardRef...';
-    classRef.current.updateShowText('100');
-    elementRef.current.value = '...';
-  };
-
-  return (
-    <div>
-      <div>
-        <ForwardRefFunctionComponent ref={forwardRef} />
-      </div>
-      <div>
-        <input ref={elementRef} />
-      </div>
-      <div>
-        <input type="button" onClick={changeInput} value="點擊加省略號" />
-      </div>
-      <div>
-        <ClassComponent ref={classRef} />
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.render(<FunctionComponent />, document.getElementById('root'));
+ReactDOM.render(<MyClassComponent />, document.getElementById('root'));

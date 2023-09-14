@@ -1,4 +1,10 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from './utils';
+import {
+  REACT_ELEMENT,
+  REACT_FORWARD_REF,
+  REACT_TEXT,
+  CREATE,
+  MOVE,
+} from './utils';
 import { addEvent } from './event';
 
 function render(VNode, containerDOM) {
@@ -34,7 +40,9 @@ function createDOM(VNode) {
     // 函數式組件
     return getDomByFunctionComponent(VNode);
   }
-  if (type && VNode.$$typeof === REACT_ELEMENT) {
+  if (type === REACT_TEXT) {
+    dom = document.createTextNode(props.text);
+  } else if (type && VNode.$$typeof === REACT_ELEMENT) {
     dom = document.createElement(type);
   }
 
@@ -46,9 +54,6 @@ function createDOM(VNode) {
     } else if (Array.isArray(props.children)) {
       // 處理多個子元素
       mountArray(props.children, dom);
-    } else if (typeof props.children === 'string') {
-      // 單純文字內容直接掛載
-      dom.appendChild(document.createTextNode(props.children));
     }
   }
 
@@ -106,13 +111,8 @@ function mountArray(children, parent) {
   if (!Array.isArray(children)) return;
 
   for (let i = 0; i < children.length; i++) {
-    if (typeof children[i] === 'string') {
-      // 單純文字內容直接掛載
-      parent.appendChild(document.createTextNode(children[i]));
-    } else {
-      // 處理單個子元素
-      mount(children[i], parent);
-    }
+    children[i].index = i;
+    mount(children[i], parent);
   }
 }
 
@@ -156,10 +156,161 @@ export function findDomByVNode(VNode) {
  * @param {*} oldDOM
  * @param {*} newVNode
  */
-export function updateDomTree(oldDOM, newVNode) {
-  const parentNode = oldDOM.parentNode;
-  parentNode.removeChild(oldDOM);
-  parentNode.appendChild(createDOM(newVNode));
+export function updateDomTree(oldVNode, newVNode, oldDOM) {
+  const typeMap = {
+    NO_OPERATE: !oldVNode && !newVNode,
+    ADD: !oldVNode && newVNode,
+    DELETE: oldVNode && !newVNode,
+    REPLACE: oldVNode && newVNode && oldVNode.type !== newVNode.type, // 類型不同
+  };
+  const UPDATE_TYPE = Object.keys(typeMap).filter((key) => typeMap[key])[0];
+
+  switch (UPDATE_TYPE) {
+    case 'NO_OPERATE':
+      break;
+    case 'DELETE':
+      removeVNode(oldVNode);
+      break;
+    case 'ADD':
+      oldDOM.parentNode.appendChild(createDOM(newVNode));
+      break;
+    case 'REPLACE':
+      removeVNode(oldVNode);
+      oldDOM.parentNode.appendChild(createDOM(newVNode));
+      break;
+    default:
+      deepDOMDiff(oldVNode, newVNode);
+      break;
+  }
+}
+
+function removeVNode(vNode) {
+  const currentDOM = findDomByVNode(vNode);
+  if (currentDOM) currentDOM.remove();
+}
+
+function deepDOMDiff(oldVNode, newVNode) {
+  const diffTypeMap = {
+    ORIGIN_NODE: typeof oldVNode.type === 'string',
+    CLASS_COMPONENT:
+      typeof oldVNode.type === 'function' && oldVNode.type.IS_CLASS_COMPONENT,
+    FUNCTION_COMPONENT: typeof oldVNode.type === 'function',
+    TEXT: oldVNode.type === REACT_TEXT,
+  };
+  const DIFF_TYPE = Object.keys(diffTypeMap).filter(
+    (key) => diffTypeMap[key]
+  )[0];
+
+  switch (DIFF_TYPE) {
+    case 'ORIGIN_NODE':
+      const currentDOM = (newVNode.dom = findDomByVNode(oldVNode));
+      setPropsForDOM(currentDOM, newVNode.props);
+      updateChildren(
+        currentDOM,
+        oldVNode.props.children,
+        newVNode.props.children
+      );
+      break;
+    case 'CLASS_COMPONENT':
+      updateClassComponent(oldVNode, newVNode);
+      break;
+    case 'FUNCTION_COMPONENT':
+      updateFunctionComponent(oldVNode, newVNode);
+      break;
+    case 'TEXT':
+      newVNode.dom = findDomByVNode(oldVNode);
+      newVNode.dom.textContent = newVNode.props.text;
+      break;
+    default:
+      break;
+  }
+}
+
+function updateChildren(parentDOM, oldVNodeChildren, newVNodeChildren) {
+  oldVNodeChildren = (
+    Array.isArray(oldVNodeChildren) ? oldVNodeChildren : [oldVNodeChildren]
+  ).filter(Boolean);
+  newVNodeChildren = (
+    Array.isArray(newVNodeChildren) ? newVNodeChildren : [newVNodeChildren]
+  ).filter(Boolean);
+
+  let lastNotChangedIndex = -1;
+  const oldKeyChildMap = {};
+  oldVNodeChildren.forEach((oldVNode, index) => {
+    const oldKey = oldVNode && oldVNode.key ? oldVNode.key : index;
+    oldKeyChildMap[oldKey] = oldVNode;
+  });
+
+  const actions = [];
+  newVNodeChildren.forEach((newVNode, index) => {
+    newVNode.index = index;
+    const newKey = newVNode.key ? newVNode.key : index;
+    const oldVNode = oldKeyChildMap[newKey];
+
+    if (oldVNode) {
+      deepDOMDiff(oldVNode, newVNode);
+      if (oldVNode.index < lastNotChangedIndex) {
+        actions.push({
+          type: MOVE,
+          oldVNode,
+          newVNode,
+          index,
+        });
+      }
+      delete oldKeyChildMap[newKey];
+      lastNotChangedIndex = Math.max(lastNotChangedIndex, oldVNode.index);
+    } else {
+      actions.push({
+        type: CREATE,
+        newVNode,
+        index,
+      });
+    }
+  });
+
+  const VNodeToMove = actions
+    .filter((action) => action.type === MOVE)
+    .map((action) => action.oldVNode);
+  const VNodeToDelete = Object.values(oldKeyChildMap);
+  VNodeToMove.concat(VNodeToDelete).forEach((oldVChild) => {
+    const currentDOM = findDomByVNode(oldVChild);
+    currentDOM.remove();
+  });
+
+  actions.forEach((action) => {
+    const { type, oldVNode, newVNode, index } = action;
+    const childNodes = parentDOM.childNodes;
+
+    const getDomForInsert = () => {
+      if (type === CREATE) {
+        return createDOM(newVNode);
+      }
+      if (type === MOVE) {
+        return findDomByVNode(oldVNode);
+      }
+    };
+
+    const childNode = childNodes[index];
+    if (childNode) {
+      parentDOM.insertBefore(getDomForInsert(), childNode);
+    } else {
+      parentDOM.appendChild(getDomForInsert());
+    }
+  });
+}
+
+function updateClassComponent(oldVNode, newVNode) {
+  const classInstance = (newVNode.classInstance = oldVNode.classInstance);
+  classInstance.updater.launchUpdate();
+}
+
+function updateFunctionComponent(oldVNode, newVNode) {
+  const oldDOM = (newVNode.dom = findDomByVNode(oldVNode));
+  if (!oldDOM) return;
+  const { type, props } = newVNode;
+  const newRenderVNode = type(props);
+  updateDomTree(oldVNode.oldRenderVNode, newRenderVNode, oldDOM);
+  newVNode.oldRenderVNode = newRenderVNode;
 }
 
 const ReactDOM = {
