@@ -1,39 +1,56 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
-class Clock extends React.Component {
+class DerivedState extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      date: new Date(),
+      prevName: 'aaa',
+      email: 'aaa@xxx.com',
     };
   }
-  componentDidMount() {
-    this.timerID = setInterval(() => this.tick(), 1000);
-    console.log('componentDidMount');
-  }
-  componentWillUnmount() {
-    clearInterval(this.timerID);
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    console.log('componentDidUpdate', this.state.date);
-  }
-  shouldComponentUpdate(nextProps, nextState) {
-    console.log('shouldComponentUpdate');
-    return true;
-  }
-  tick() {
-    this.setState({
-      date: new Date(),
-    });
+  static getDerivedStateFromProps(props, state) {
+    if (props.name !== state.prevName) {
+      return {
+        prevName: props.name,
+        email: props.name + '@xxx.com',
+      };
+    }
   }
   render() {
     return (
       <div>
-        <h1>It is {this.state.date.toLocaleTimeString()}.</h1>
+        <h1>Email:</h1>
+        <h2>{this.state.email}</h2>
       </div>
     );
   }
 }
 
-ReactDOM.render(<Clock />, document.getElementById('root'));
+class ParentClass extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: 'aaa',
+    };
+  }
+  changeName = () => {
+    this.setState({
+      name: 'bbb',
+    });
+  };
+  render() {
+    return (
+      <div>
+        <input
+          type="button"
+          value="點擊改變id"
+          onClick={() => this.changeName()}
+        />
+        <DerivedState name={this.state.name} />
+      </div>
+    );
+  }
+}
+
+ReactDOM.render(<ParentClass />, document.getElementById('root'));

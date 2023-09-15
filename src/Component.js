@@ -72,6 +72,12 @@ export class Component {
     const oldVNode = this.oldVNode; // 當前的虛擬DOM
     const oldDOM = findDomByVNode(oldVNode); // 取得當前的真實DOM
 
+    if (this.constructor.getDerivedStateFromProps) {
+      const newState =
+        this.constructor.getDerivedStateFromProps(this.props, this.state) || {};
+      this.state = { ...this.state, ...newState };
+    }
+
     // 1. 獲取重新執行 render 函數後的新虛擬DOM
     const newVNode = this.render();
     // 2. 根據新虛擬DOM 生成新的真實DOM

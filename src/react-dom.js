@@ -71,8 +71,8 @@ function createDOM(VNode) {
 function getDomByClassComponent(VNode) {
   const { type, props, ref } = VNode;
   const instance = new type(props);
-  VNode.classInstance = instance;
   ref && (ref.current = instance);
+  VNode.classInstance = instance;
 
   const renderVNode = instance.render();
   instance.oldVNode = renderVNode; // 當前的虛擬DOM，也相當於是舊的虛擬DOM
