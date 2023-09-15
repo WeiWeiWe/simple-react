@@ -18,6 +18,10 @@ class Clock extends React.Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     console.log('componentDidUpdate', this.state.date);
   }
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log('shouldComponentUpdate');
+    return true;
+  }
   tick() {
     this.setState({
       date: new Date(),

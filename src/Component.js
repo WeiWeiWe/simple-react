@@ -32,19 +32,26 @@ class Updater {
     }
   }
 
-  launchUpdate() {
+  launchUpdate(nextProps) {
     const { ClassComponentInstance, pendingStates } = this;
-    if (pendingStates.length === 0) return;
+    if (pendingStates.length === 0 && !nextProps) return;
 
-    ClassComponentInstance.state = this.pendingStates.reduce(
-      (preState, newState) => {
-        return { ...preState, ...newState };
-      },
-      ClassComponentInstance.state
-    );
+    let isShouldUpdate = true;
+    const nextState = this.pendingStates.reduce((preState, newState) => {
+      return { ...preState, ...newState };
+    }, ClassComponentInstance.state);
+
+    if (
+      ClassComponentInstance.shouldComponentUpdate &&
+      !ClassComponentInstance.shouldComponentUpdate(nextProps, nextState)
+    ) {
+      isShouldUpdate = false;
+    }
+    if (nextProps) ClassComponentInstance.props = nextProps;
+    ClassComponentInstance.state = nextState;
     this.pendingStates.length = 0;
 
-    ClassComponentInstance.update();
+    if (isShouldUpdate) ClassComponentInstance.update();
   }
 }
 
