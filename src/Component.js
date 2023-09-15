@@ -72,5 +72,9 @@ export class Component {
     updateDomTree(oldVNode, newVNode, oldDOM);
 
     this.oldVNode = newVNode; // 真實DOM 掛載完後，替換當前的虛擬DOM
+
+    if (this.componentDidUpdate) {
+      this.componentDidUpdate(this.props, this.state);
+    }
   }
 }

@@ -1,47 +1,35 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
-class MyClassComponent extends React.Component {
-  isReset = false;
-  oldArr = ['A', 'B', 'C', 'D', 'E'];
-  newArr = ['C', 'B', 'E', 'F', 'A'];
+class Clock extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      arr: this.oldArr,
+      date: new Date(),
     };
   }
-  updateShowArr() {
+  componentDidMount() {
+    this.timerID = setInterval(() => this.tick(), 1000);
+    console.log('componentDidMount');
+  }
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    console.log('componentDidUpdate', this.state.date);
+  }
+  tick() {
     this.setState({
-      arr: this.isReset ? this.oldArr : this.newArr,
+      date: new Date(),
     });
-    this.isReset = !this.isReset;
   }
   render() {
     return (
       <div>
-        <div
-          className="test-class"
-          style={{
-            color: 'red',
-            cursor: 'pointer',
-            border: '1px solid gray',
-            borderRadius: '6px',
-            display: 'inline-block',
-            padding: '6px 12px',
-          }}
-          onClick={() => this.updateShowArr()}
-        >
-          Change The Text
-        </div>
-        <div>
-          {this.state.arr.map((item) => {
-            return <div key={item}>{item}</div>;
-          })}
-        </div>
+        <h1>It is {this.state.date.toLocaleTimeString()}.</h1>
       </div>
     );
   }
 }
 
-ReactDOM.render(<MyClassComponent />, document.getElementById('root'));
+ReactDOM.render(<Clock />, document.getElementById('root'));

@@ -71,19 +71,17 @@ function createDOM(VNode) {
 function getDomByClassComponent(VNode) {
   const { type, props, ref } = VNode;
   const instance = new type(props);
+  VNode.classInstance = instance;
+  ref && (ref.current = instance);
 
   const renderVNode = instance.render();
   instance.oldVNode = renderVNode; // 當前的虛擬DOM，也相當於是舊的虛擬DOM
-  ref && (ref.current = instance);
-
-  // 測試 setState 功能用，後續記得刪除
-  // setTimeout(() => {
-  //   instance.setState({ testState: 'child444444' });
-  // }, 3000);
 
   if (!renderVNode) return null;
+  const dom = createDOM(renderVNode);
+  if (instance.componentDidMount) instance.componentDidMount();
 
-  return createDOM(renderVNode);
+  return dom;
 }
 
 /**
@@ -187,6 +185,9 @@ export function updateDomTree(oldVNode, newVNode, oldDOM) {
 function removeVNode(vNode) {
   const currentDOM = findDomByVNode(vNode);
   if (currentDOM) currentDOM.remove();
+  if (vNode.classInstance && vNode.classInstance.componentWillUnmount) {
+    vNode.classInstance.componentWillUnmount();
+  }
 }
 
 function deepDOMDiff(oldVNode, newVNode) {
