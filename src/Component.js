@@ -1,4 +1,5 @@
 import { findDomByVNode, updateDomTree } from './react-dom';
+import { deepClone } from './utils';
 
 export const updaterQueue = {
   isBatch: false,
@@ -34,6 +35,8 @@ class Updater {
 
   launchUpdate(nextProps) {
     const { ClassComponentInstance, pendingStates } = this;
+    const prevProps = deepClone(ClassComponentInstance.props);
+    const prevState = deepClone(ClassComponentInstance.state);
     if (pendingStates.length === 0 && !nextProps) return;
 
     let isShouldUpdate = true;
@@ -51,7 +54,7 @@ class Updater {
     ClassComponentInstance.state = nextState;
     this.pendingStates.length = 0;
 
-    if (isShouldUpdate) ClassComponentInstance.update();
+    if (isShouldUpdate) ClassComponentInstance.update(prevProps, prevState);
   }
 }
 
@@ -68,7 +71,7 @@ export class Component {
     this.updater.addState(partialState);
   }
 
-  update() {
+  update(prevProps, prevState) {
     const oldVNode = this.oldVNode; // 當前的虛擬DOM
     const oldDOM = findDomByVNode(oldVNode); // 取得當前的真實DOM
 
@@ -77,6 +80,10 @@ export class Component {
         this.constructor.getDerivedStateFromProps(this.props, this.state) || {};
       this.state = { ...this.state, ...newState };
     }
+
+    const snapshot =
+      this.getSnapshotBeforeUpdate &&
+      this.getSnapshotBeforeUpdate(prevProps, prevState);
 
     // 1. 獲取重新執行 render 函數後的新虛擬DOM
     const newVNode = this.render();
@@ -87,7 +94,7 @@ export class Component {
     this.oldVNode = newVNode; // 真實DOM 掛載完後，替換當前的虛擬DOM
 
     if (this.componentDidUpdate) {
-      this.componentDidUpdate(this.props, this.state);
+      this.componentDidUpdate(this.props, this.state, snapshot);
     }
   }
 }
