@@ -1,6 +1,7 @@
 import {
   REACT_ELEMENT,
   REACT_FORWARD_REF,
+  REACT_MEMO,
   toVNode,
   shallowCompare,
 } from './utils';
@@ -57,12 +58,21 @@ class PureComponent extends Component {
   }
 }
 
+function memo(type, compare = shallowCompare) {
+  return {
+    $$typeof: REACT_MEMO,
+    type,
+    compare,
+  };
+}
+
 const React = {
   createElement,
   Component, // 類組件
   createRef,
   forwardRef,
   PureComponent,
+  memo,
 };
 
 export default React;

@@ -1,6 +1,7 @@
 export const REACT_ELEMENT = Symbol('react.element'); // 唯一標示，表示 react 元素
 export const REACT_FORWARD_REF = Symbol('react.forward_ref');
 export const REACT_TEXT = Symbol('react.text');
+export const REACT_MEMO = Symbol('react.memo');
 export const MOVE = Symbol('react.dom.diff.move');
 export const CREATE = Symbol('react.dom.diff.create');
 
