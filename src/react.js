@@ -6,6 +6,7 @@ import {
   shallowCompare,
 } from './utils';
 import { Component } from './Component';
+export * from './hooks';
 
 function createElement(type, properties = {}, children) {
   const ref = properties.ref || null; // 與 DOM 相關的操作

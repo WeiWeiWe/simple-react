@@ -7,9 +7,16 @@ import {
   MOVE,
 } from './utils';
 import { addEvent } from './event';
+import { resetHookIndex } from './hooks';
+
+export let emitUpdateForHooks;
 
 function render(VNode, containerDOM) {
   mount(VNode, containerDOM);
+  emitUpdateForHooks = () => {
+    resetHookIndex();
+    updateDomTree(VNode, VNode, findDomByVNode(VNode));
+  };
 }
 
 function mount(VNode, containerDOM) {
@@ -95,8 +102,8 @@ function getDomByFunctionComponent(VNode) {
   const { type, props } = VNode;
   const renderVNode = type(props);
   if (!renderVNode) return null;
-  VNode.oldRenderVNode = renderVNode;
   const dom = createDOM(renderVNode);
+  VNode.oldRenderVNode = renderVNode;
   VNode.dom = dom;
   return dom;
 }
