@@ -1,14 +1,28 @@
-import React, { useState } from './react';
+import React, { useReducer } from './react';
 import ReactDOM from './react-dom';
 
+function reducer(state, action) {
+  if (action.type === 'incremented') {
+    return {
+      age: state.age + 1,
+    };
+  }
+  throw Error('Unknown action.');
+}
+
 function Counter() {
-  const [count, setCount] = useState(0);
+  const [state, dispatch] = useReducer(reducer, { age: 18 });
 
   function handleClick() {
-    setCount(count + 1);
+    dispatch({ type: 'incremented' });
   }
 
-  return <button onClick={handleClick}>You pressed me {count} times</button>;
+  return (
+    <div>
+      <button onClick={handleClick}>Increment age</button>
+      <p>I'm {state.age}</p>
+    </div>
+  );
 }
 
 ReactDOM.render(<Counter />, document.getElementById('root'));
