@@ -65,3 +65,30 @@ export function useRef(initialValue) {
 export function useImperativeHandle(ref, dataFactory) {
   ref.current = dataFactory();
 }
+
+export function useMemo(dataFactory, deps = []) {
+  const [preData, preDeps] = states[hookIndex] || [null, null];
+  if (
+    !states[hookIndex] ||
+    deps.some((item, index) => item !== preDeps[index])
+  ) {
+    const newData = dataFactory();
+    states[hookIndex++] = [newData, deps];
+    return newData;
+  }
+  hookIndex++;
+  return preData;
+}
+
+export function useCallback(callback, deps) {
+  const [preCallback, preDeps] = states[hookIndex] || [null, null];
+  if (
+    !states[hookIndex] ||
+    deps.some((item, index) => item !== preDeps[index])
+  ) {
+    states[hookIndex++] = [callback, deps];
+    return callback;
+  }
+  hookIndex++;
+  return preCallback;
+}
